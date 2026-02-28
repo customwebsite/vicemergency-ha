@@ -1,0 +1,33 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set Up VicEmergency Monitoring Zone",
+        "description": "Configure a monitoring zone. Place the pin on the map and adjust the radius to define which incidents you want to track.",
+        "data": {
+          "name": "Zone name",
+          "location": "Monitoring location and radius"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to the VicEmergency data feed. Please try again later.",
+      "no_location": "Please select a location on the map."
+    },
+    "abort": {
+      "already_configured": "A zone is already configured at this location."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "VicEmergency Options",
+        "data": {
+          "scan_interval": "Update interval (seconds)",
+          "exclude_categories": "Exclude category groups",
+          "include_statewide": "Include statewide incidents"
+        }
+      }
+    }
+  }
+}
