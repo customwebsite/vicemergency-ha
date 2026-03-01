@@ -218,6 +218,22 @@ automation:
 
 ---
 
+## ⚠️ Important Safety Notice
+
+**This integration is an informational tool only.** It is not a replacement for official emergency warnings and should never be relied upon as your sole source of emergency information.
+
+During an emergency, always:
+
+- Visit **[emergency.vic.gov.au](https://emergency.vic.gov.au)** for official warnings and updates
+- Tune in to **ABC Melbourne 774 AM** for emergency broadcasts ([listen live online](https://www.abc.net.au/listen/live/melbourne))
+- Call **000** for life-threatening emergencies
+- Follow instructions from emergency services personnel
+- Monitor the **VicEmergency app** on your mobile device
+
+Data feeds may be delayed, incomplete, or unavailable during major events. Sensor and card states may not reflect the current situation on the ground. Always verify critical information through official channels before making safety decisions.
+
+---
+
 ## Data Source
 
 This integration uses the official VicEmergency GeoJSON feed at `emergency.vic.gov.au/public/osom-geojson.json`, published by Emergency Management Victoria under Creative Commons Attribution 3.0 Australia.
