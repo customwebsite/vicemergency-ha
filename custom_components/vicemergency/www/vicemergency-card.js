@@ -596,6 +596,27 @@ class VicEmergencyCardEditor extends HTMLElement {
     if (!this._hass) return;
     this._rendered = true;
 
+    // Find all vicemergency total_incidents sensors
+    const entities = Object.keys(this._hass.states)
+      .filter(e => e.startsWith("sensor.vicemergency_") && e.endsWith("_total_incidents"))
+      .sort();
+
+    const options = entities.map(e => {
+      const friendly = this._hass.states[e]?.attributes?.friendly_name || e;
+      return `<option value="${e}" ${e === this._config.entity ? "selected" : ""}>${friendly} (${e})</option>`;
+    }).join("");
+
+    const entitySelector = entities.length > 0
+      ? `<select id="entity">${options}</select>`
+      : `<input id="entity" value="${this._config.entity || ""}"
+               placeholder="sensor.vicemergency_home_total_incidents">`;
+
+    const hint = entities.length === 0
+      ? `<div style="font-size:0.8em;color:var(--error-color,#D50000);margin-top:4px;">
+           No VicEmergency zones found. Add the integration first via Settings → Devices & Services.
+         </div>`
+      : "";
+
     this.innerHTML = `
       <style>
         .editor-row { margin-bottom: 12px; }
@@ -618,9 +639,9 @@ class VicEmergencyCardEditor extends HTMLElement {
       </style>
 
       <div class="editor-row">
-        <label>Total Incidents Entity *</label>
-        <input id="entity" value="${this._config.entity || ""}"
-               placeholder="sensor.vicemergency_home_total_incidents">
+        <label>Monitoring Zone *</label>
+        ${entitySelector}
+        ${hint}
       </div>
       <div class="editor-row">
         <label>Title</label>
@@ -649,9 +670,16 @@ class VicEmergencyCardEditor extends HTMLElement {
       }));
     };
 
-    this.querySelector("#entity").addEventListener("input", (e) => {
+    this.querySelector("#entity").addEventListener(entities.length > 0 ? "change" : "input", (e) => {
       this._config.entity = e.target.value; fire();
     });
+
+    // Auto-select first entity if none configured
+    if (!this._config.entity && entities.length > 0) {
+      this._config.entity = entities[0];
+      fire();
+    }
+
     this.querySelector("#title").addEventListener("input", (e) => {
       this._config.title = e.target.value; fire();
     });

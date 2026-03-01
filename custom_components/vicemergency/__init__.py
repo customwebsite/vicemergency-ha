@@ -37,66 +37,64 @@ PLATFORMS: list[Platform] = [
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up the VicEmergency integration (once, not per entry)."""
-    hass.data.setdefault(DOMAIN, {"coordinator": None, "entries": {}})
-
-    # Register the Lovelace card — wrapped in try/except so it never
-    # prevents the integration from loading
-    try:
-        await _async_register_card(hass)
-    except Exception:  # noqa: BLE001
-        _LOGGER.debug("Card registration skipped — add resource manually", exc_info=True)
-
+    hass.data.setdefault(DOMAIN, {"coordinator": None, "entries": {}, "card_registered": False})
     return True
 
 
-async def _async_register_card(hass: HomeAssistant) -> None:
-    """Register the Lovelace card static path and resource."""
+async def _async_ensure_card_registered(hass: HomeAssistant) -> None:
+    """Register the Lovelace card static path and resource (once)."""
+    data = hass.data[DOMAIN]
+    if data.get("card_registered"):
+        return
+
     card_dir = Path(__file__).parent / "www"
     if not card_dir.is_dir():
         return
 
     url_path = f"/{DOMAIN}_ui"
-
-    # Register static file path (new async API for HA 2025.7+)
-    from homeassistant.components.http import StaticPathConfig
-
-    await hass.http.async_register_static_paths(
-        [StaticPathConfig(url_path, str(card_dir), True)]
-    )
-    _LOGGER.debug("Registered static path: %s", url_path)
-
-    # Auto-register as a Lovelace resource
     card_url = f"{url_path}/vicemergency-card.js"
 
-    async def _async_register_resource(event=None) -> None:
-        try:
-            from homeassistant.components.lovelace.resources import (
-                ResourceStorageCollection,
-            )
-        except ImportError:
-            return
+    try:
+        # Register static file path
+        from homeassistant.components.http import StaticPathConfig
+
+        await hass.http.async_register_static_paths(
+            [StaticPathConfig(url_path, str(card_dir), True)]
+        )
+    except Exception:  # noqa: BLE001
+        _LOGGER.debug("Static path registration failed — add card resource manually", exc_info=True)
+        return
+
+    # Auto-register as a Lovelace resource
+    try:
+        from homeassistant.components.lovelace.resources import (
+            ResourceStorageCollection,
+        )
 
         resources = hass.data.get("lovelace_resources")
-        if not isinstance(resources, ResourceStorageCollection):
-            return
+        if isinstance(resources, ResourceStorageCollection):
+            for item in resources.async_items():
+                if item.get("url", "").startswith(f"/{DOMAIN}_ui/"):
+                    data["card_registered"] = True
+                    return
 
-        # Check if already registered
-        for item in resources.async_items():
-            if item.get("url", "").startswith(f"/{DOMAIN}_ui/"):
-                return
+            await resources.async_create_item({"res_type": "module", "url": card_url})
+            _LOGGER.debug("Auto-registered Lovelace resource: %s", card_url)
+    except Exception:  # noqa: BLE001
+        _LOGGER.debug("Could not auto-register card resource", exc_info=True)
 
-        await resources.async_create_item({"res_type": "module", "url": card_url})
-        _LOGGER.debug("Auto-registered Lovelace resource: %s", card_url)
-
-    if hass.is_running:
-        hass.async_create_task(_async_register_resource())
-    else:
-        hass.bus.async_listen_once("homeassistant_started", _async_register_resource)
+    data["card_registered"] = True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up a VicEmergency zone from a config entry."""
     data = hass.data[DOMAIN]
+
+    # Register the card (once, never blocks loading)
+    try:
+        await _async_ensure_card_registered(hass)
+    except Exception:  # noqa: BLE001
+        _LOGGER.debug("Card registration skipped", exc_info=True)
 
     zone_config = ZoneConfig(
         entry_id=entry.entry_id,
