@@ -230,7 +230,7 @@ class VicEmergencyCard extends HTMLElement {
     if (data.incidents.length === 0) {
       return `<div class="ve-empty">
         <ha-icon icon="mdi:shield-check"></ha-icon>
-        <span>No incidents in your area</span>
+        <span>No incidents in this watch zone</span>
       </div>`;
     }
 
