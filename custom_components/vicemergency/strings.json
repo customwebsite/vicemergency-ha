@@ -3,9 +3,15 @@
     "step": {
       "user": {
         "title": "Set Up VicEmergency Monitoring Zone",
-        "description": "Configure a monitoring zone. Place the pin on the map and adjust the radius to define which incidents you want to track.",
+        "description": "Choose a name for this monitoring zone (e.g. Home, Work, Farm).",
         "data": {
-          "name": "Zone name",
+          "name": "Zone name"
+        }
+      },
+      "location": {
+        "title": "Select Monitoring Area",
+        "description": "Place the pin and adjust the radius to define which incidents to track. Scroll down to submit.",
+        "data": {
           "location": "Monitoring location and radius"
         }
       }

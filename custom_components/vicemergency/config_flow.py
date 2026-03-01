@@ -49,15 +49,35 @@ class VicEmergencyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
+    def __init__(self) -> None:
+        """Initialise the flow."""
+        self._name: str = DEFAULT_NAME
+
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Handle the user step — name + location map picker."""
+        """Step 1: Zone name."""
+        if user_input is not None:
+            self._name = user_input.get(CONF_NAME, DEFAULT_NAME)
+            return await self.async_step_location()
+
+        return self.async_show_form(
+            step_id="user",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_NAME, default=DEFAULT_NAME): str,
+                }
+            ),
+        )
+
+    async def async_step_location(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Step 2: Map picker with radius."""
         errors: dict[str, str] = {}
 
         if user_input is not None:
             location = user_input.get(CONF_LOCATION, {})
-            name = user_input.get(CONF_NAME, DEFAULT_NAME)
 
             latitude = location.get("latitude")
             longitude = location.get("longitude")
@@ -66,6 +86,7 @@ class VicEmergencyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if latitude is None or longitude is None:
                 errors["base"] = "no_location"
             else:
+                # Test connectivity to the primary feed
                 session = async_get_clientsession(self.hass)
                 try:
                     async with session.get(
@@ -84,9 +105,9 @@ class VicEmergencyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self._abort_if_unique_id_configured()
 
                 return self.async_create_entry(
-                    title=name,
+                    title=self._name,
                     data={
-                        CONF_NAME: name,
+                        CONF_NAME: self._name,
                         "latitude": latitude,
                         "longitude": longitude,
                         CONF_RADIUS: radius_m / 1000,
@@ -100,10 +121,9 @@ class VicEmergencyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         }
 
         return self.async_show_form(
-            step_id="user",
+            step_id="location",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_NAME, default=DEFAULT_NAME): str,
                     vol.Required(
                         CONF_LOCATION, default=default_location
                     ): LocationSelector(
