@@ -15,7 +15,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType
 from homeassistant.helpers.entity import DeviceInfo, EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
@@ -35,41 +34,13 @@ async def async_setup_entry(
     coordinator: VicEmergencyCoordinator = entry_data["coordinator"]
     zone_name: str = entry_data["zone_config"].name
 
-    entities: list[SensorEntity] = []
-    valid_unique_ids: set[str] = set()
-
-    sensor = VicEmergencyTotalCountSensor(coordinator, entry, zone_name)
-    entities.append(sensor)
-    valid_unique_ids.add(sensor.unique_id)
-
-    for group in SUMMARY_GROUPS:
-        sensor = VicEmergencyGroupCountSensor(coordinator, entry, zone_name, group)
-        entities.append(sensor)
-        valid_unique_ids.add(sensor.unique_id)
-
-    sensor = VicEmergencyHighestWarningSensor(coordinator, entry, zone_name)
-    entities.append(sensor)
-    valid_unique_ids.add(sensor.unique_id)
-
-    sensor = VicEmergencyNearestSensor(coordinator, entry, zone_name)
-    entities.append(sensor)
-    valid_unique_ids.add(sensor.unique_id)
-
-    sensor = VicEmergencyFeedStatusSensor(coordinator, entry, zone_name)
-    entities.append(sensor)
-    valid_unique_ids.add(sensor.unique_id)
-
-    # Stale entity cleanup
-    ent_reg = async_get_entity_registry(hass)
-    for entity_entry in list(ent_reg.entities.values()):
-        if (
-            entity_entry.platform == DOMAIN
-            and entity_entry.config_entry_id == entry.entry_id
-            and entity_entry.unique_id not in valid_unique_ids
-            and entity_entry.domain == "sensor"
-        ):
-            _LOGGER.info("Removing stale sensor: %s", entity_entry.entity_id)
-            ent_reg.async_remove(entity_entry.entity_id)
+    entities: list[SensorEntity] = [
+        VicEmergencyTotalCountSensor(coordinator, entry, zone_name),
+        *(VicEmergencyGroupCountSensor(coordinator, entry, zone_name, group) for group in SUMMARY_GROUPS),
+        VicEmergencyHighestWarningSensor(coordinator, entry, zone_name),
+        VicEmergencyNearestSensor(coordinator, entry, zone_name),
+        VicEmergencyFeedStatusSensor(coordinator, entry, zone_name),
+    ]
 
     async_add_entities(entities, update_before_add=True)
 

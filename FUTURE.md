@@ -4,7 +4,7 @@ This document catalogues the data available from the VicEmergency feed, what thi
 
 ---
 
-## 1. Current Entities (v1.2.0)
+## 1. Current Entities (v1.3.0)
 
 ### Sensors
 
@@ -60,9 +60,9 @@ The primary feed (`emergency.vic.gov.au/public/osom-geojson.json`) returns a Geo
 | `id2` | `esta_id` | Nearest (attr) | ESTA CAD number |
 | `sourceTitle` | `source_title` | ✅ All | Incident name (e.g. "Dalrymple Rd") |
 | `category1` | `category1` | ✅ All | Primary category (e.g. "Fire", "Riverine Flood") |
-| `category2` | `category2` | ❌ Stored only | Secondary category (rarely populated) |
+| `category2` | `category2` | ❌ Stored only | Secondary category (populated on warnings: "Met", "Flash Flood"; on incidents: "Building", "Bushfire") |
 | `feedType` | `feedtype` | ✅ Warning level | Determines warning level mapping |
-| `status` | `status` | ✅ Nearest (attr) | e.g. "Going", "Controlled", "Under Control", "Unknown" |
+| `status` | `status` | ✅ Nearest (attr) | Incidents: "Going", "Controlled", "Under Control"; Warnings: severity e.g. "Minor" |
 | `sourceOrg` | `source_org` | ❌ Stored only | Reporting agency (e.g. "CFA", "VICSES", "BOM") |
 | `location` | `location` | ✅ Nearest (attr) | Human-readable location |
 | `description` | `description` | ❌ Stored only | Free-text description |
@@ -80,7 +80,10 @@ These fields appear in the GeoJSON feed but are not extracted by the parser. The
 | Property | Description | Potential use |
 |---|---|---|
 | `created` | Incident creation timestamp | Duration sensor, "time since reported" |
-| `originId` | Original system incident ID | Cross-reference with agency systems |
+| `name` | Short name (e.g. "Advice", incident name) | Display / notification title |
+| `action` | Current action phrase (e.g. "Threat Is Reduced", "Stay Informed") | Display in attributes |
+| `text` | Plain-text summary of the incident/warning | Notification body content |
+| `sourceFeed` | Feed source identifier (e.g. "cop-cap") | Filtering, diagnostics |
 | `webBody` | Full HTML description | Rich notification content |
 | `webHeadline` | Short headline | Notification title |
 | `municipalityCode` | LGA code | Filter by municipality |
@@ -95,8 +98,29 @@ These fields appear in the GeoJSON feed but are not extracted by the parser. The
 | `sizeFmt` | Formatted area string | Display |
 | `resourceCount` | Number of resources deployed | Resource tracking sensor |
 | `otherInfo` | Additional info string | Display in attributes |
-| `cap_*` | CAP-AU fields (Common Alerting Protocol) | Standards-compliant alerting |
+| `cap` | Nested CAP-AU object (see below) | Standards-compliant alerting |
+| `incidentFeatures` | Nested incident array on warnings | Warning-to-incident linking |
 | `photoUrl` | Incident photo URL | Card enhancement |
+
+#### CAP-AU Object Structure
+
+Warnings include a nested `cap` object (not `cap_*` prefixed fields as previously documented):
+
+```json
+{
+  "cap": {
+    "category": "Met",
+    "event": "Flash Flood",
+    "eventCode": "flashFlood",
+    "urgency": "Expected",
+    "severity": "Minor",
+    "certainty": "Unknown",
+    "contact": "email@ses.vic.gov.au",
+    "senderName": "State Emergency Service",
+    "responseType": "Monitor"
+  }
+}
+```
 
 ---
 
@@ -122,7 +146,12 @@ Hazardous Material, Medical, Animal Health, Dangerous Animal, Oiled Wildlife, An
 **Outages & Closures group:**
 Tree Down, Building Damage, Fallen Power Lines, Road Closed, Road Affected, Rail Disruption, Power Outage, Gas Outage, Water Outage, Park/Forest Closure, Beach Closure, School Closure
 
-> **Note:** This list is based on observed values. EMV may add new categories at any time. Unmapped categories default to the "other" group and are included in the total count but not displayed in any specific chip.
+**Warning-specific (from `feedType: warning`):**
+Advice, Met
+
+> **Note:** Warnings use `category1` for the warning level label (e.g. "Advice") and `category2` for the hazard type (e.g. "Met"). The specific event type (e.g. "Flash Flood", "Riverine Flood") appears in the nested `cap.event` field, not in category1/2. This means warnings may not map cleanly to the category groups above — the integration currently categorises them via the `feedType` field for warning level and falls through to "other" group for the category chip.
+
+> This list is based on observed values. EMV may add new categories at any time. Unmapped categories default to the "other" group and are included in the total count but not displayed in any specific chip.
 
 ### feedType Values (observed)
 
@@ -136,6 +165,8 @@ Tree Down, Building Damage, Fallen Power Lines, Road Closed, Road Affected, Rail
 
 ### status Values (observed)
 
+**GeoJSON incidents:**
+
 | Status | Typical meaning |
 |---|---|
 | `Going` | Active and spreading (fire) |
@@ -146,9 +177,40 @@ Tree Down, Building Damage, Fallen Power Lines, Road Closed, Road Affected, Rail
 | `Unknown` | Status not determined |
 | `Completed` | Activity finished |
 
+**GeoJSON warnings:** The `status` field contains the CAP severity (e.g. `Minor`, `Moderate`, `Severe`, `Extreme`), not the operational status.
+
+**JSON fallback (`incidentStatus` field):** Uses longer-form values: `Not Yet Under Control`, `Responding`, `Contained`, `Under Control`.
+
+**JSON fallback (`originStatus` field):** Uses uppercase codes: `GOING`, `RESPONDING`, `CONTAINED`, `CONTROLLED`.
+
 ### sourceOrg Values (observed)
 
-CFA, VICSES, BOM, Parks Victoria, VicRoads, ESTA, Melbourne Water, DELWP (now DEECA), Ambulance Victoria
+CFA, VICSES, BOM, Parks Victoria, VicRoads, ESTA, Melbourne Water, DELWP (now DEECA), Ambulance Victoria, EMV, FRV
+
+---
+
+## 3a. JSON Fallback Field Mapping
+
+The legacy JSON endpoint (`data.emergency.vic.gov.au/Show?pageId=getIncidentJSON`) uses different field names from the primary GeoJSON feed. The parser maps both:
+
+| GeoJSON property | JSON fallback field | Notes |
+|---|---|---|
+| `id` | `incidentNo` | Integer in fallback, string in GeoJSON |
+| `sourceTitle` | `name` | |
+| `category1` | `category1` | Same |
+| `category2` | `category2` | Same |
+| `feedType` | `feedType` | Same |
+| `status` | `incidentStatus` | Longer-form values in fallback |
+| `sourceOrg` | `agency` | |
+| `location` | `incidentLocation` | |
+| `geometry.coordinates` | `latitude` / `longitude` | Flat fields in fallback |
+| `size` | `incidentSize` | |
+| `sizeFormatted` | `incidentSizeFmt` | |
+| `resources` | `resourceCount` | |
+| `updated` | `lastUpdateDateTime` | `dd/MM/yyyy HH:mm:ss` format |
+| `id2` | `eventCode` | ESTA event code |
+
+Additional fields available only in the JSON fallback: `incidentNo`, `incidentType` (e.g. "BUSHFIRE", "GRASS", "STRUCTURE"), `territory` (e.g. "CFA", "DELWP", "FRV"), `fireDistrict`, `municipality`, `originStatus`, `originDateTime`, `catg1CssClass`.
 
 ---
 

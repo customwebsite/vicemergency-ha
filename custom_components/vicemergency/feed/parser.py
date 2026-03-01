@@ -72,8 +72,18 @@ def _parse_geojson_feature(feature: dict[str, Any]) -> VicEmergencyIncident | No
 
 
 def _extract_coordinates(geometry: dict[str, Any]) -> tuple[float | None, float | None]:
-    """Extract lat/lon from a GeoJSON geometry."""
+    """Extract lat/lon from a GeoJSON geometry.
+
+    Handles Point, Polygon, MultiPolygon, and GeometryCollection.
+    For GeometryCollection (used by warnings with area boundaries),
+    the first Point geometry is preferred; otherwise the first
+    Polygon centroid is used.
+    """
     geom_type = geometry.get("type", "")
+
+    if geom_type == "GeometryCollection":
+        return _extract_from_geometry_collection(geometry)
+
     coords = geometry.get("coordinates")
     if not coords:
         return None, None
@@ -86,6 +96,34 @@ def _extract_coordinates(geometry: dict[str, Any]) -> tuple[float | None, float 
 
     if geom_type == "MultiPolygon":
         return _centroid(coords[0][0])
+
+    return None, None
+
+
+def _extract_from_geometry_collection(
+    geometry: dict[str, Any],
+) -> tuple[float | None, float | None]:
+    """Extract coordinates from a GeometryCollection.
+
+    Warnings typically contain a Point (centre) and a Polygon (boundary).
+    Prefer the Point for accuracy; fall back to Polygon centroid.
+    """
+    geometries = geometry.get("geometries")
+    if not geometries:
+        return None, None
+
+    # First pass: look for a Point
+    for geom in geometries:
+        if geom.get("type") == "Point":
+            coords = geom.get("coordinates")
+            if coords and len(coords) >= 2:
+                return float(coords[1]), float(coords[0])
+
+    # Second pass: fall back to first Polygon/MultiPolygon centroid
+    for geom in geometries:
+        result = _extract_coordinates(geom)
+        if result != (None, None):
+            return result
 
     return None, None
 
@@ -117,41 +155,46 @@ def parse_json_fallback(raw: dict[str, Any]) -> list[VicEmergencyIncident]:
         except Exception:
             _LOGGER.debug(
                 "Skipping malformed JSON fallback item: %s",
-                item.get("id", "unknown"),
+                item.get("incidentNo") or item.get("id", "unknown"),
                 exc_info=True,
             )
     return incidents
 
 
 def _parse_json_item(item: dict[str, Any]) -> VicEmergencyIncident | None:
-    """Parse a single item from the JSON fallback."""
-    incident_id = item.get("id")
+    """Parse a single item from the JSON fallback.
+
+    The legacy JSON API uses different field names from the GeoJSON feed:
+      incidentNo (not id), latitude/longitude (not lat/lon),
+      name (not sourceTitle), incidentLocation (not location), etc.
+    """
+    incident_id = item.get("incidentNo") or item.get("id")
     if not incident_id:
         return None
 
-    lat = _safe_float(item.get("lat"))
-    lon = _safe_float(item.get("lon") or item.get("long"))
+    lat = _safe_float(item.get("latitude") or item.get("lat"))
+    lon = _safe_float(item.get("longitude") or item.get("lon") or item.get("long"))
     if lat is None or lon is None:
         return None
 
     return VicEmergencyIncident(
         id=str(incident_id),
-        source_title=item.get("sourceTitle", ""),
+        source_title=item.get("name") or item.get("sourceTitle", ""),
         category1=item.get("category1", ""),
         category2=item.get("category2", ""),
         feedtype=item.get("feedType", "incident"),
-        status=item.get("status", ""),
-        source_org=item.get("sourceOrg", ""),
-        location=item.get("location", ""),
+        status=item.get("incidentStatus") or item.get("status", ""),
+        source_org=item.get("agency") or item.get("sourceOrg", ""),
+        location=item.get("incidentLocation") or item.get("location", ""),
         latitude=lat,
         longitude=lon,
         description=item.get("description", ""),
-        size=item.get("size"),
-        size_formatted=item.get("sizeFormatted"),
-        resources=_str_or_none(item.get("resources")),
+        size=item.get("incidentSize") or item.get("size"),
+        size_formatted=item.get("incidentSizeFmt") or item.get("sizeFormatted"),
+        resources=_str_or_none(item.get("resourceCount") or item.get("resources")),
         statewide=_parse_bool(item.get("statewide")),
-        updated=_parse_datetime(item.get("updated")),
-        esta_id=_str_or_none(item.get("id2")),
+        updated=_parse_datetime(item.get("lastUpdateDateTime") or item.get("updated")),
+        esta_id=_str_or_none(item.get("eventCode") or item.get("id2")),
     )
 
 
@@ -234,6 +277,7 @@ def _parse_datetime(value: str | None) -> datetime | None:
         "%Y-%m-%dT%H:%M:%S.%f",
         "%Y-%m-%dT%H:%M:%S",
         "%Y/%m/%d %H:%M:%S",
+        "%d/%m/%Y %H:%M:%S",
     ):
         try:
             return datetime.strptime(value, fmt)
