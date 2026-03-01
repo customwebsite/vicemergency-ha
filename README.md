@@ -250,6 +250,15 @@ If the primary GeoJSON endpoint fails:
 
 After 3 consecutive primary failures, the integration enters sustained fallback mode and periodically retries every 10 cycles to auto-recover.
 
+### References
+
+- [EMV Emergency Data & Licence Terms](https://www.emv.vic.gov.au/responsibilities/victorias-warning-system/emergency-data) — data usage conditions and Creative Commons Attribution 3.0 Australia licence
+- [VicEmergency Data Feed FAQ](https://support.emergency.vic.gov.au/hc/en-gb/articles/235717508-How-do-I-access-the-VicEmergency-data-feed) — official feed access information
+- [CFA RSS Feeds](https://www.cfa.vic.gov.au/rss-feeds) — CFA incident and fire danger data feeds
+- [VicEmergency Incidents on ArcGIS](https://www.arcgis.com/home/item.html?id=fe1acc1681024335b7abeb77c0a700a1) — GeoJSON service overview
+- [aio-geojson-vicemergency-incidents](https://pypi.org/project/aio-geojson-vicemergency-incidents/) — community Python library for VicEmergency GeoJSON feeds
+- [Victorian Government API Developer Portal](https://www.vic.gov.au/api-developer-portal) — government APIs and developer resources
+
 ---
 
 ## Category Groups
@@ -257,8 +266,8 @@ After 3 consecutive primary failures, the integration enters sustained fallback 
 | Group | Example incident types |
 |---|---|
 | 🔥 Fire | Bushfire, Planned Burn, Burn Area, Burn Advice |
-| 🌊 Flood | Flood, Dam Failure |
-| ⛈️ Storm & Weather | Storm, Damaging Winds, Earthquake, Tsunami, Landslide |
+| 🌊 Flood | Flood, Riverine Flood, Flash Flood, Coastal Flood, Dam Failure |
+| ⛈️ Storm & Weather | Storm, Severe Storm, Severe Thunderstorm, Severe Weather, Damaging Winds, Earthquake, Tsunami, Landslide |
 | 🚗 Transport | Vehicle/Aircraft/Rail/Marine Accident, Rescue |
 | ☣️ Hazmat & Health | Hazardous Material, Medical, Shark Sighting, Water Pollution |
 | 🚧 Outages & Closures | Power/Gas/Water Outage, Road Closed, School/Beach/Park Closure |
