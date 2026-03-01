@@ -277,6 +277,9 @@ class VicEmergencyCard extends HTMLElement {
     const mapLink = this._config.show_map_link
       ? `<a class="ve-footer-link" href="https://emergency.vic.gov.au" target="_blank" rel="noopener">
            <ha-icon icon="mdi:open-in-new"></ha-icon> VicEmergency
+         </a>
+         <a class="ve-footer-link" href="https://www.abc.net.au/listen/live/melbourne" target="_blank" rel="noopener">
+           <ha-icon icon="mdi:radio"></ha-icon> ABC 774
          </a>`
       : "";
 
@@ -286,7 +289,9 @@ class VicEmergencyCard extends HTMLElement {
           <span class="ve-feed-dot" style="background: ${feedDot}"></span>
           <span>${feedLabel}</span>
         </div>
-        ${mapLink}
+        <div class="ve-footer-links">
+          ${mapLink}
+        </div>
       </div>
     `;
   }
@@ -537,6 +542,7 @@ class VicEmergencyCard extends HTMLElement {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        gap: 12px;
         padding-top: 8px;
         border-top: 1px solid var(--divider-color, #e0e0e0);
         font-size: 0.78em;
@@ -547,6 +553,12 @@ class VicEmergencyCard extends HTMLElement {
         display: flex;
         align-items: center;
         gap: 6px;
+      }
+
+      .ve-footer-links {
+        display: flex;
+        align-items: center;
+        gap: 12px;
       }
 
       .ve-feed-dot {
