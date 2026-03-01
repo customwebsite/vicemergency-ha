@@ -111,6 +111,46 @@ Each active incident within the zone radius creates a `geo_location` entity that
 
 ---
 
+## Dashboard Examples
+
+### Summary card only
+
+```yaml
+type: custom:vicemergency-card
+entity: sensor.vicemergency_home_total_incidents
+```
+
+### Summary card with auto-showing map
+
+The map appears only when there are active incidents and hides when all clear:
+
+```yaml
+type: vertical-stack
+cards:
+  - type: custom:vicemergency-card
+    entity: sensor.vicemergency_home_total_incidents
+  - type: conditional
+    conditions:
+      - entity: sensor.vicemergency_home_total_incidents
+        state_not: "0"
+    card:
+      type: map
+      geo_location_sources:
+        - vicemergency
+      default_zoom: 10
+      hours_to_show: 0
+```
+
+### Compact mode (no incident list)
+
+```yaml
+type: custom:vicemergency-card
+entity: sensor.vicemergency_home_total_incidents
+compact: true
+```
+
+---
+
 ## Automations
 
 ### Alert when a new fire starts nearby
