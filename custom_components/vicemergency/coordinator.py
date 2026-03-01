@@ -16,7 +16,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DEFAULT_SCAN_INTERVAL, DOMAIN
+from .const import DEFAULT_EXCLUDED_FEEDTYPES, DEFAULT_SCAN_INTERVAL, DOMAIN
 from .feed.client import FeedFetchError, VicEmergencyFeedClient
 from .feed.entry import VicEmergencyIncident
 from .feed.manager import FeedDiff, FeedManager
@@ -115,6 +115,10 @@ class VicEmergencyCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         filtered: list[VicEmergencyIncident] = []
 
         for incident in incidents:
+            # Skip informational feedtypes (e.g. burn-area) that aren't active incidents
+            if incident.feedtype in DEFAULT_EXCLUDED_FEEDTYPES:
+                continue
+
             incident.compute_distance(zone.latitude, zone.longitude)
 
             if incident.statewide and zone.include_statewide:
