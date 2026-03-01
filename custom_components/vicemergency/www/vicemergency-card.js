@@ -13,7 +13,7 @@
  *   compact: false               # optional — hides incident list
  *   show_map_link: true          # optional
  *
- * @version 1.0.0
+ * @version 1.2.0
  */
 
 const CARD_VERSION = "1.0.0";
@@ -30,6 +30,7 @@ console.info(
 
 const WARNING_META = {
   none:              { label: "All Clear",          colour: "#4CAF50", bg: "rgba(76,175,80,0.08)",  icon: "mdi:check-circle" },
+  active:            { label: "Active",             colour: "#78909C", bg: "rgba(120,144,156,0.08)", icon: "mdi:alert-circle-outline" },
   advice:            { label: "Advice",             colour: "#FFC107", bg: "rgba(255,193,7,0.08)",  icon: "mdi:information" },
   watch_and_act:     { label: "Watch & Act",        colour: "#FF6D00", bg: "rgba(255,109,0,0.08)",  icon: "mdi:alert" },
   emergency_warning: { label: "Emergency Warning",  colour: "#D50000", bg: "rgba(213,0,0,0.08)",    icon: "mdi:alert-octagon" },
@@ -109,8 +110,9 @@ class VicEmergencyCard extends HTMLElement {
     // Gather all related entities
     const data = this._gatherData(prefix, state);
 
-    // Build card HTML
-    const warning = WARNING_META[data.warningLevel] || WARNING_META.none;
+    // Build card HTML — override "none" with "active" when incidents exist
+    const badgeLevel = (data.warningLevel === "none" && data.total > 0) ? "active" : data.warningLevel;
+    const warning = WARNING_META[badgeLevel] || WARNING_META.none;
 
     this.innerHTML = `
       <ha-card>
@@ -133,7 +135,7 @@ class VicEmergencyCard extends HTMLElement {
     // Group counts
     const groups = {};
     for (const key of Object.keys(GROUP_META)) {
-      const entity = val(`${key}_count`);
+      const entity = val(`${key}_incidents`);
       const count = entity ? parseInt(entity.state, 10) || 0 : 0;
       groups[key] = {
         count,
@@ -143,7 +145,7 @@ class VicEmergencyCard extends HTMLElement {
     }
 
     // Warning level
-    const warningEntity = val("highest_warning");
+    const warningEntity = val("highest_warning_level");
     const warningLevel = warningEntity?.state || "none";
 
     // Nearest
