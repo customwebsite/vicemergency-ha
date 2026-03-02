@@ -126,11 +126,18 @@ class VicEmergencyCard extends HTMLElement {
       </ha-card>
     `;
 
-    // Bind click handlers for incident rows → navigate to Map tab
+    // Bind click handlers for incident rows → scroll to map card below
     this.querySelectorAll('[data-action="map"]').forEach((el) => {
       el.addEventListener("click", () => {
-        window.history.pushState(null, "", "/map");
-        window.dispatchEvent(new Event("location-changed"));
+        // Find the next card sibling in the dashboard (the map card below)
+        let sibling = this.nextElementSibling;
+        if (!sibling) {
+          // Try parent's next sibling (depends on dashboard layout)
+          sibling = this.parentElement?.nextElementSibling;
+        }
+        if (sibling) {
+          sibling.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
       });
     });
   }
