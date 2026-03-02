@@ -38,6 +38,7 @@ class VicEmergencyIncident:
     statewide: bool = False
     updated: datetime | None = None
     esta_id: str | None = None
+    event_type: str | None = None  # From cap.event (e.g. "Flash Flood", "Riverine Flood")
 
     # --- Computed fields (set per-zone after parsing) ---
     distance_km: float | None = field(default=None, repr=False)
@@ -45,8 +46,19 @@ class VicEmergencyIncident:
 
     @property
     def category_group(self) -> str:
-        """Map category1 to a summary group key."""
-        return CATEGORY_GROUPS.get(self.category1, "other")
+        """Map to a summary group key.
+
+        For incidents, category1 maps directly (e.g. "Fire" → "fire").
+        For warnings, category1 is the warning label (e.g. "Advice") which
+        doesn't map — so we fall back to event_type from cap.event
+        (e.g. "Flash Flood" → "flood").
+        """
+        group = CATEGORY_GROUPS.get(self.category1)
+        if group:
+            return group
+        if self.event_type:
+            return CATEGORY_GROUPS.get(self.event_type, "other")
+        return "other"
 
     @property
     def warning_level(self) -> str | None:
@@ -80,6 +92,7 @@ class VicEmergencyIncident:
             "statewide": self.statewide,
             "updated": self.updated.isoformat() if self.updated else None,
             "esta_id": self.esta_id,
+            "event_type": self.event_type,
             "distance_km": round(self.distance_km, 2) if self.distance_km is not None else None,
             "bearing": self.bearing,
             "warning_level": self.warning_level,

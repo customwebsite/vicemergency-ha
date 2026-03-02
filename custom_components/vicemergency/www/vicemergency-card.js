@@ -13,10 +13,10 @@
  *   compact: false               # optional — hides incident list
  *   show_map_link: true          # optional
  *
- * @version 1.2.0
+ * @version 1.3.0
  */
 
-const CARD_VERSION = "1.0.0";
+const CARD_VERSION = "1.3.0";
 
 console.info(
   `%c VICEMERGENCY %c v${CARD_VERSION} `,
@@ -199,7 +199,7 @@ class VicEmergencyCard extends HTMLElement {
           <div class="ve-nearest">
             <ha-icon icon="mdi:map-marker-distance"></ha-icon>
             <span>Nearest: <strong>${data.nearest.distance} km ${data.nearest.bearing || ""}</strong></span>
-            <span class="ve-nearest-detail">${this._esc(data.nearest.title || "")}</span>
+            <span class="ve-nearest-detail">${this._esc(data.nearest.category || data.nearest.title || "")}${data.nearest.location ? ` — ${this._esc(data.nearest.location)}` : ""}</span>
           </div>
         ` : ""}
       </div>
@@ -227,10 +227,17 @@ class VicEmergencyCard extends HTMLElement {
   // ─── Incident list ───────────────────────────────────────────
 
   _renderIncidentList(data) {
-    if (data.incidents.length === 0) {
+    if (data.incidents.length === 0 && data.total === 0) {
       return `<div class="ve-empty">
         <ha-icon icon="mdi:shield-check"></ha-icon>
         <span>No incidents in this watch zone</span>
+      </div>`;
+    }
+
+    if (data.incidents.length === 0 && data.total > 0) {
+      return `<div class="ve-empty">
+        <ha-icon icon="mdi:information-outline"></ha-icon>
+        <span>${data.total} uncategorised incident${data.total !== 1 ? "s" : ""} in zone</span>
       </div>`;
     }
 
@@ -242,15 +249,21 @@ class VicEmergencyCard extends HTMLElement {
       const groupMeta = GROUP_META[inc.group] || {};
       const ft = FEEDTYPE_META[inc.feedtype] || FEEDTYPE_META.incident;
       const dist = inc.distance_km != null ? `${inc.distance_km} km` : "";
+      const isWarning = inc.feedtype && inc.feedtype !== "incident";
+      const displayTitle = isWarning
+        ? (inc.location || inc.event_type || inc.title || "Warning")
+        : (inc.title || inc.location || "Unknown");
+      const displayCat = inc.event_type || inc.category || "";
+      const displayStatus = isWarning ? (ft.label || "") : (inc.status || "");
 
       return `
         <div class="ve-incident">
           <div class="ve-incident-dot" style="background: ${ft.dot}"></div>
           <div class="ve-incident-body">
-            <div class="ve-incident-title">${this._esc(inc.title || inc.location || "Unknown")}</div>
+            <div class="ve-incident-title">${this._esc(displayTitle)}</div>
             <div class="ve-incident-meta">
-              <span class="ve-incident-cat" style="color: ${groupMeta.colour || "#666"}">${this._esc(inc.category || "")}</span>
-              ${inc.status ? `<span class="ve-incident-status">${this._esc(inc.status)}</span>` : ""}
+              <span class="ve-incident-cat" style="color: ${groupMeta.colour || "#666"}">${this._esc(displayCat)}</span>
+              ${displayStatus ? `<span class="ve-incident-status">${this._esc(displayStatus)}</span>` : ""}
             </div>
           </div>
           <div class="ve-incident-dist">${dist}</div>

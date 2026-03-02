@@ -122,8 +122,11 @@ class VicEmergencyGroupCountSensor(VicEmergencyBaseSensor):
         return {
             "incidents": [
                 {
-                    "id": i.id, "title": i.source_title, "category": i.category1,
+                    "id": i.id, "title": i.source_title,
+                    "category": i.event_type or i.category1,
+                    "event_type": i.event_type,
                     "status": i.status, "location": i.location,
+                    "feedtype": i.feedtype,
                     "distance_km": round(i.distance_km, 1) if i.distance_km else None,
                 }
                 for i in matching[:10]
@@ -200,7 +203,8 @@ class VicEmergencyNearestSensor(VicEmergencyBaseSensor):
         return {
             "incident_id": nearest.id,
             "title": nearest.source_title,
-            "category": nearest.category1,
+            "category": nearest.event_type or nearest.category1,
+            "event_type": nearest.event_type,
             "status": nearest.status,
             "location": nearest.location,
             "bearing": nearest.bearing,

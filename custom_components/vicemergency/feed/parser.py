@@ -50,6 +50,10 @@ def _parse_geojson_feature(feature: dict[str, Any]) -> VicEmergencyIncident | No
     if not incident_id:
         return None
 
+    # Extract event type from CAP-AU nested object (warnings only)
+    cap = props.get("cap")
+    event_type = cap.get("event") if isinstance(cap, dict) else None
+
     return VicEmergencyIncident(
         id=str(incident_id),
         source_title=props.get("sourceTitle", ""),
@@ -68,6 +72,7 @@ def _parse_geojson_feature(feature: dict[str, Any]) -> VicEmergencyIncident | No
         statewide=_parse_bool(props.get("statewide")),
         updated=_parse_datetime(props.get("updated")),
         esta_id=_str_or_none(props.get("id2")),
+        event_type=event_type,
     )
 
 
