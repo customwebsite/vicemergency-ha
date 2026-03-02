@@ -125,6 +125,14 @@ class VicEmergencyCard extends HTMLElement {
         </div>
       </ha-card>
     `;
+
+    // Bind click handlers for incident rows → navigate to Map tab
+    this.querySelectorAll('[data-action="map"]').forEach((el) => {
+      el.addEventListener("click", () => {
+        window.history.pushState(null, "", "/map");
+        window.dispatchEvent(new Event("location-changed"));
+      });
+    });
   }
 
   _gatherData(prefix, totalState) {
@@ -196,7 +204,7 @@ class VicEmergencyCard extends HTMLElement {
           </div>
         </div>
         ${data.nearest && data.nearest.distance !== null ? `
-          <div class="ve-nearest">
+          <div class="ve-nearest" data-action="map">
             <ha-icon icon="mdi:map-marker-distance"></ha-icon>
             <span>Nearest: <strong>${data.nearest.distance} km ${data.nearest.bearing || ""}</strong></span>
             <span class="ve-nearest-detail">${this._esc(data.nearest.category || data.nearest.title || "")}${data.nearest.location ? ` — ${this._esc(data.nearest.location)}` : ""}</span>
@@ -257,7 +265,7 @@ class VicEmergencyCard extends HTMLElement {
       const displayStatus = isWarning ? (ft.label || "") : (inc.status || "");
 
       return `
-        <div class="ve-incident">
+        <div class="ve-incident" data-action="map">
           <div class="ve-incident-dot" style="background: ${ft.dot}"></div>
           <div class="ve-incident-body">
             <div class="ve-incident-title">${this._esc(displayTitle)}</div>
@@ -399,6 +407,12 @@ class VicEmergencyCard extends HTMLElement {
         border: 1px solid var(--divider-color, #e0e0e0);
         font-size: 0.85em;
         color: var(--primary-text-color);
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+
+      .ve-nearest:hover {
+        background: var(--secondary-background-color, rgba(0,0,0,0.04));
       }
 
       .ve-nearest ha-icon {
@@ -493,6 +507,15 @@ class VicEmergencyCard extends HTMLElement {
         gap: 10px;
         padding: 10px 0;
         border-bottom: 1px solid var(--divider-color, #e0e0e0);
+        cursor: pointer;
+        transition: background 0.15s;
+        margin: 0 -16px;
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .ve-incident:hover {
+        background: var(--secondary-background-color, rgba(0,0,0,0.04));
       }
 
       .ve-incident:last-child {
