@@ -61,6 +61,14 @@ class VicEmergencyIncident:
         return "other"
 
     @property
+    def display_title(self) -> str:
+        """Human-readable title, preferring location over empty/meaningless sourceTitle."""
+        valid_title = self.source_title if self.source_title and self.source_title.lower() != "undefined" else ""
+        if self.warning_level:
+            return self.location or self.event_type or valid_title or "Warning"
+        return self.location or valid_title or self.category1 or "Unknown"
+
+    @property
     def warning_level(self) -> str | None:
         """Derive the Australian Warning System level from feedtype."""
         from ..const import FEEDTYPE_WARNING_MAP
@@ -76,6 +84,7 @@ class VicEmergencyIncident:
         return {
             "id": self.id,
             "source_title": self.source_title,
+            "display_title": self.display_title,
             "category1": self.category1,
             "category2": self.category2,
             "category_group": self.category_group,

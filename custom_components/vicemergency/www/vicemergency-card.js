@@ -13,10 +13,10 @@
  *   compact: false               # optional — hides incident list
  *   show_map_link: true          # optional
  *
- * @version 1.3.0
+ * @version 1.3.1
  */
 
-const CARD_VERSION = "1.3.0";
+const CARD_VERSION = "1.3.1";
 
 console.info(
   `%c VICEMERGENCY %c v${CARD_VERSION} `,
@@ -265,9 +265,10 @@ class VicEmergencyCard extends HTMLElement {
       const ft = FEEDTYPE_META[inc.feedtype] || FEEDTYPE_META.incident;
       const dist = inc.distance_km != null ? `${inc.distance_km} km` : "";
       const isWarning = inc.feedtype && inc.feedtype !== "incident";
+      const validTitle = inc.title && inc.title !== "Undefined" && inc.title !== "undefined" ? inc.title : "";
       const displayTitle = isWarning
-        ? (inc.location || inc.event_type || inc.title || "Warning")
-        : (inc.title || inc.location || "Unknown");
+        ? (inc.location || inc.event_type || validTitle || "Warning")
+        : (inc.location || validTitle || inc.category || "Unknown");
       const displayCat = inc.event_type || inc.category || "";
       const displayStatus = isWarning ? (ft.label || "") : (inc.status || "");
 

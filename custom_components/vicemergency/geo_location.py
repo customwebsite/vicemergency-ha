@@ -103,7 +103,7 @@ class VicEmergencyGeoLocation(CoordinatorEntity[VicEmergencyCoordinator], Geoloc
 
     @property
     def name(self) -> str:
-        return self._incident.source_title or self._incident.location or "Unknown"
+        return self._incident.display_title
 
     @property
     def source(self) -> str:
