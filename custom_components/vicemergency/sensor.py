@@ -127,6 +127,7 @@ class VicEmergencyGroupCountSensor(VicEmergencyBaseSensor):
                     "event_type": i.event_type,
                     "status": i.status, "location": i.location,
                     "feedtype": i.feedtype,
+                    "resources": i.resources,
                     "distance_km": round(i.distance_km, 1) if i.distance_km else None,
                 }
                 for i in matching[:10]
@@ -207,6 +208,7 @@ class VicEmergencyNearestSensor(VicEmergencyBaseSensor):
             "event_type": nearest.event_type,
             "status": nearest.status,
             "location": nearest.location,
+            "resources": nearest.resources,
             "bearing": nearest.bearing,
             "feedtype": nearest.feedtype,
         }

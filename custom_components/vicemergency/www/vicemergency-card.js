@@ -13,10 +13,10 @@
  *   compact: false               # optional — hides incident list
  *   show_map_link: true          # optional
  *
- * @version 1.3.1
+ * @version 1.3.2
  */
 
-const CARD_VERSION = "1.3.1";
+const CARD_VERSION = "1.3.2";
 
 console.info(
   `%c VICEMERGENCY %c v${CARD_VERSION} `,
@@ -282,7 +282,10 @@ class VicEmergencyCard extends HTMLElement {
               ${displayStatus ? `<span class="ve-incident-status">${this._esc(displayStatus)}</span>` : ""}
             </div>
           </div>
-          <div class="ve-incident-dist">${dist}</div>
+          <div class="ve-incident-right">
+            ${inc.resources > 0 ? `<span class="ve-incident-resources">🚒 ${inc.resources}</span>` : ""}
+            <span class="ve-incident-dist">${dist}</span>
+          </div>
         </div>
       `;
     }).join("");
@@ -567,13 +570,26 @@ class VicEmergencyCard extends HTMLElement {
         color: var(--secondary-text-color);
       }
 
+      .ve-incident-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 2px;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
       .ve-incident-dist {
         font-size: 0.82em;
         font-weight: 600;
         color: var(--secondary-text-color);
         white-space: nowrap;
-        flex-shrink: 0;
-        margin-top: 2px;
+      }
+
+      .ve-incident-resources {
+        font-size: 0.75em;
+        color: #FB8C00;
+        white-space: nowrap;
       }
 
       .ve-more {
