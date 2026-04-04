@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 DOMAIN = "vicemergency"
-MANUFACTURER = "Emergency Management Victoria"
+MANUFACTURER = "Customwebsite"
 ATTRIBUTION = (
     "Data provided by the State of Victoria, Australia under "
     "Creative Commons Attribution 3.0 Australia"
