@@ -13,10 +13,10 @@
  *   compact: false               # optional — hides incident list
  *   show_map_link: true          # optional
  *
- * @version 1.3.2
+ * @version 1.4.0
  */
 
-const CARD_VERSION = "1.3.2";
+const CARD_VERSION = "1.4.0";
 
 console.info(
   `%c VICEMERGENCY %c v${CARD_VERSION} `,
