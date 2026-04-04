@@ -29,6 +29,7 @@
       "init": {
         "title": "VicEmergency Options",
         "data": {
+          "radius": "Watch zone radius (km)",
           "scan_interval": "Update interval (seconds)",
           "exclude_categories": "Exclude category groups",
           "include_statewide": "Include statewide incidents"

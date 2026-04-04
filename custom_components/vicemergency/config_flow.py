@@ -151,6 +151,9 @@ class VicEmergencyOptionsFlow(config_entries.OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
+        current_radius = self.config_entry.options.get(
+            CONF_RADIUS, self.config_entry.data.get(CONF_RADIUS, DEFAULT_RADIUS)
+        )
         current_interval = self.config_entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
         current_excludes = self.config_entry.options.get(CONF_EXCLUDE_CATEGORIES, [])
         current_statewide = self.config_entry.options.get(CONF_INCLUDE_STATEWIDE, True)
@@ -164,6 +167,13 @@ class VicEmergencyOptionsFlow(config_entries.OptionsFlow):
             step_id="init",
             data_schema=vol.Schema(
                 {
+                    vol.Optional(CONF_RADIUS, default=current_radius): NumberSelector(
+                        NumberSelectorConfig(
+                            min=1, max=500,
+                            step=1, unit_of_measurement="km",
+                            mode=NumberSelectorMode.BOX,
+                        )
+                    ),
                     vol.Optional(CONF_SCAN_INTERVAL, default=current_interval): NumberSelector(
                         NumberSelectorConfig(
                             min=MIN_SCAN_INTERVAL, max=MAX_SCAN_INTERVAL,

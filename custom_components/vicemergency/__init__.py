@@ -101,7 +101,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         name=entry.data.get(CONF_NAME, DEFAULT_NAME),
         latitude=entry.data["latitude"],
         longitude=entry.data["longitude"],
-        radius_km=entry.data.get(CONF_RADIUS, DEFAULT_RADIUS),
+        radius_km=entry.options.get(CONF_RADIUS, entry.data.get(CONF_RADIUS, DEFAULT_RADIUS)),
         exclude_categories=entry.options.get(CONF_EXCLUDE_CATEGORIES, []),
         include_statewide=entry.options.get(CONF_INCLUDE_STATEWIDE, True),
         scan_interval=int(entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)),
