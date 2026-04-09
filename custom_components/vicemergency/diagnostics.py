@@ -6,9 +6,12 @@ from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.redact import async_redact_data
 
 from .const import DOMAIN
 from .coordinator import VicEmergencyCoordinator
+
+TO_REDACT = {"latitude", "longitude"}
 
 
 async def async_get_config_entry_diagnostics(
@@ -18,7 +21,7 @@ async def async_get_config_entry_diagnostics(
     coordinator: VicEmergencyCoordinator | None = entry_data.get("coordinator")
 
     diag: dict[str, Any] = {
-        "config": dict(entry.data),
+        "config": async_redact_data(entry.data, TO_REDACT),
         "options": dict(entry.options),
     }
 

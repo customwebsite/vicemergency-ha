@@ -29,7 +29,8 @@ async def async_setup_entry(
     entry_data = hass.data[DOMAIN]["entries"][entry.entry_id]
     coordinator: VicEmergencyCoordinator = entry_data["coordinator"]
     manager = GeoLocationManager(coordinator, entry, async_add_entities)
-    manager.start()
+    unsub = manager.start()
+    entry.async_on_unload(unsub)
 
 
 class GeoLocationManager:
@@ -41,9 +42,10 @@ class GeoLocationManager:
         self._async_add_entities = async_add_entities
         self._tracked: dict[str, VicEmergencyGeoLocation] = {}
 
-    def start(self) -> None:
+    def start(self) -> callable:
+        """Start listening and return the unsubscribe callback."""
         self._process_update()
-        self._coordinator.async_add_listener(self._on_coordinator_update)
+        return self._coordinator.async_add_listener(self._on_coordinator_update)
 
     @callback
     def _on_coordinator_update(self) -> None:

@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor import SensorEntity, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType
@@ -79,7 +79,7 @@ class VicEmergencyTotalCountSensor(VicEmergencyBaseSensor):
         self._attr_name = "Total Incidents"
         self._attr_icon = "mdi:alert-circle"
         self._attr_native_unit_of_measurement = "incidents"
-        self._attr_state_class = "measurement"
+        self._attr_state_class = SensorStateClass.MEASUREMENT
 
     @property
     def native_value(self) -> int:
@@ -108,7 +108,7 @@ class VicEmergencyGroupCountSensor(VicEmergencyBaseSensor):
         self._attr_name = f"{friendly} Incidents"
         self._attr_icon = GROUP_ICONS.get(group, "mdi:alert")
         self._attr_native_unit_of_measurement = "incidents"
-        self._attr_state_class = "measurement"
+        self._attr_state_class = SensorStateClass.MEASUREMENT
 
     @property
     def native_value(self) -> int:
